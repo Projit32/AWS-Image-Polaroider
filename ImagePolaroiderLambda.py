@@ -1,7 +1,8 @@
+from memory_profiler import profile
 import uuid
-import tracemalloc
+import os
 
-from PIL import ImageOps, ImageDraw, ImageFont, ImageFile
+from PIL import ImageOps, ImageDraw, ImageFont
 from PIL import Image
 from PIL.ExifTags import TAGS
 import PIL
@@ -23,13 +24,14 @@ def draw_text(pil_image: Image.Image, message: str, font_color: tuple, width_fac
     draw.text(((W-w)*width_factor, (H-h)*height_factor), message, font=font, fill=font_color)
     return pil_image
 
-
+@profile
 def generate_polaroid(image_URL:str) -> Image.Image:
     with Image.open(image_URL) as im:
 
         width = im.width
         height = im.height
         context_size = height if height > width else width
+        context_font_size = width if height > width else height
 
         polaroid_image = add_margin(ImageOps.exif_transpose(im), int(context_size * 0.02), int(context_size * 0.02),
                                     int(context_size * 0.15), int(context_size * 0.02), (255, 255, 255))
@@ -65,7 +67,7 @@ def generate_polaroid(image_URL:str) -> Image.Image:
         print("Main line :", main_line)
 
         polaroid_image = draw_text(polaroid_image, main_line, (0, 0, 0), 0.5, 0.9,
-                                   "./fonts/lato.heavy.ttf", 90)
+                                   "./fonts/lato.heavy.ttf", int(context_font_size/44.44))
 
         sub_line = metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
 
@@ -83,12 +85,14 @@ def generate_polaroid(image_URL:str) -> Image.Image:
 
         print("Sub line :", sub_line)
         polaroid_image = draw_text(polaroid_image, sub_line, (128, 128, 128), 0.5, 0.95,
-                                   "./fonts/lato.medium-italic.ttf", 70)
+                                   "./fonts/lato.medium-italic.ttf", int(context_font_size/57.14))
 
         return polaroid_image
 
 if __name__ == "__main__":
-        generate_polaroid("E:\\photos\\20240112_164420.jpg").save("./output/"+str(uuid.uuid4())+".png")
+    for item in os.listdir("./input"):
+        print("Polaroiding : "+item)
+        generate_polaroid("./input/"+item).save("./output/"+str(uuid.uuid4())+".png")
 
 
 
