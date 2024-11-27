@@ -1,5 +1,5 @@
 import uuid
-from uuid import UUID
+import tracemalloc
 
 from PIL import ImageOps, ImageDraw, ImageFont, ImageFile
 from PIL import Image
@@ -83,7 +83,7 @@ def generate_polaroid(image_URL:str) -> Image.Image:
 
         print("Sub line :", sub_line)
         polaroid_image = draw_text(polaroid_image, sub_line, (128, 128, 128), 0.5, 0.95,
-                                   "./fonts/lato.light-italic.ttf", 70)
+                                   "./fonts/lato.medium-italic.ttf", 70)
 
         return polaroid_image
 
