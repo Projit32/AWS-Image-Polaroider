@@ -1,3 +1,6 @@
+import concurrent.futures
+import traceback
+
 from memory_profiler import profile
 import uuid
 import os
@@ -24,7 +27,7 @@ def draw_text(pil_image: Image.Image, message: str, font_color: tuple, width_fac
     draw.text(((W-w)*width_factor, (H-h)*height_factor), message, font=font, fill=font_color)
     return pil_image
 
-@profile
+
 def generate_polaroid(image_URL:str) -> Image.Image:
     with Image.open(image_URL) as im:
 
@@ -41,58 +44,82 @@ def generate_polaroid(image_URL:str) -> Image.Image:
                          "ISOSpeedRatings", "ShutterSpeedValue"]
         metadata_dict = dict()
         # iterating over all EXIF data fields
-        for tag_id in exif_data:
-            # get the tag name, instead of human unreadable tag id
-            tag = TAGS.get(tag_id, tag_id)
-            data = exif_data.get(tag_id)
-            # decode bytes
-            if isinstance(data, bytes):
-                data = data.decode()
-            if tag in metadata_keys:
-                metadata_dict[tag] = str(data)
+        if exif_data:
+            for tag_id in exif_data:
+                # get the tag name, instead of human unreadable tag id
+                tag = TAGS.get(tag_id, tag_id)
+                data = exif_data.get(tag_id)
+                if tag in metadata_keys:
+                    # decode bytes
+                    if isinstance(data, bytes):
+                        data = data.decode()
+                    metadata_dict[tag] = str(data)
 
-        print(metadata_dict)
+            print(metadata_dict)
 
-        main_line = ""
+            main_line = ""
 
-        if metadata_dict.get("Make") and metadata_dict.get("Model"):
-            main_line = (metadata_dict.get("Make") + " " + metadata_dict.get("Model")).title()
+            if metadata_dict.get("Make") and metadata_dict.get("Model"):
+                main_line = (metadata_dict.get("Make") + " " + metadata_dict.get("Model")).title()
 
-        if metadata_dict.get("DateTime"):
-            if main_line:
-                main_line += "   |   " + metadata_dict.get("DateTime")
-            else:
-                main_line = metadata_dict.get("DateTime")
+            if metadata_dict.get("DateTime"):
+                if main_line:
+                    main_line += "   |   " + metadata_dict.get("DateTime")
+                else:
+                    main_line = metadata_dict.get("DateTime")
 
-        print("Main line :", main_line)
+            print("Main line :", main_line)
 
-        polaroid_image = draw_text(polaroid_image, main_line, (0, 0, 0), 0.5, 0.9,
-                                   "./fonts/lato.heavy.ttf", int(context_font_size/44.44))
+            polaroid_image = draw_text(polaroid_image, main_line.strip(), (0, 0, 0), 0.5, 0.9,
+                                       "./fonts/lato.heavy.ttf", int(context_font_size/44.44))
 
-        sub_line = metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
+            sub_line = ""
+            if metadata_dict.get("ImageWidth") and metadata_dict.get("ImageLength"):
+                sub_line = metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
 
-        if metadata_dict.get("MaxApertureValue"):
-            sub_line += "   f/" + metadata_dict.get("MaxApertureValue")
+            if metadata_dict.get("MaxApertureValue"):
+                sub_line += "   f/" + metadata_dict.get("MaxApertureValue")
 
-        if metadata_dict.get("ShutterSpeedValue"):
-            sub_line += "   1/" + str(1 / float(metadata_dict.get("ShutterSpeedValue")))
+            if metadata_dict.get("ShutterSpeedValue"):
+                sub_line += "   1/" + str(1 / float(metadata_dict.get("ShutterSpeedValue")))
 
-        if metadata_dict.get("FocalLength"):
-            sub_line += "   " + metadata_dict.get("FocalLength") + "mm"
+            if metadata_dict.get("FocalLength"):
+                sub_line += "   " + metadata_dict.get("FocalLength") + "mm"
 
-        if metadata_dict.get("ISOSpeedRatings"):
-            sub_line += "   ISO" + metadata_dict.get("ISOSpeedRatings")
+            if metadata_dict.get("ISOSpeedRatings"):
+                sub_line += "   ISO" + metadata_dict.get("ISOSpeedRatings")
 
-        print("Sub line :", sub_line)
-        polaroid_image = draw_text(polaroid_image, sub_line, (128, 128, 128), 0.5, 0.95,
-                                   "./fonts/lato.medium-italic.ttf", int(context_font_size/57.14))
+            print("Sub line :", sub_line)
+            polaroid_image = draw_text(polaroid_image, sub_line.strip(), (128, 128, 128), 0.5, 0.95,
+                                       "./fonts/lato.medium-italic.ttf", int(context_font_size/57.14))
 
         return polaroid_image
 
+error_items = list()
+def main(value):
+    try:
+        generate_polaroid(value).save("./output/" + str(uuid.uuid4()) + ".png", "PNG", compress_level=1)
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception", str(e))
+        error_items.append(value)
+
 if __name__ == "__main__":
-    for item in os.listdir("./input"):
-        print("Polaroiding : "+item)
-        generate_polaroid("./input/"+item).save("./output/"+str(uuid.uuid4())+".png")
+
+    values = ["./input/"+item for item in os.listdir("./input")]
+    print("Initial Input Size", len(values))
+
+    result = list()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as exe:
+        # Maps the method 'cube' with a list of values.
+        result = exe.map(main, values)
+
+    print("Final result size", len(list(result)))
+    print("final error Size", len(error_items), error_items)
+
+
+
+
 
 
 
