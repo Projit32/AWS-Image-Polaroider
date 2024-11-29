@@ -1,7 +1,5 @@
 import concurrent.futures
 import traceback
-
-from markdown_it.rules_inline import image
 from memory_profiler import profile
 import uuid
 import os
