@@ -4,7 +4,7 @@ from memory_profiler import profile
 import uuid
 import os
 
-from PIL import ImageOps, ImageDraw, ImageFont, ImageFilter
+from PIL import ImageOps, ImageDraw, ImageFont, ImageFilter, ImageFile
 from PIL import Image
 from PIL.ExifTags import TAGS
 import PIL
@@ -60,15 +60,17 @@ def get_meta_data(im: Image) -> (str, str):
 
 
 
-        sub_line = ""
+        sub_line = "{0:.1f}".format((im.height*im.width)/1000000)+"MP"
         if metadata_dict.get("ImageWidth") and metadata_dict.get("ImageLength"):
-            sub_line = metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
+            sub_line +="    "+metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
+        else:
+            sub_line +="    "+str(im.width)+ "x" + str(im.height)
 
         if metadata_dict.get("MaxApertureValue"):
             sub_line += "   f/" + metadata_dict.get("MaxApertureValue")
 
         if metadata_dict.get("ExposureTime"):
-            sub_line += "   1/" + str(1 / float(metadata_dict.get("ExposureTime")))+"s"
+            sub_line += "   1/" + str(int(1 / float(metadata_dict.get("ExposureTime"))))+"s"
 
         if metadata_dict.get("FocalLength"):
             sub_line += "   " + metadata_dict.get("FocalLength") + "mm"
