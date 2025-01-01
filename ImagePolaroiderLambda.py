@@ -1,6 +1,6 @@
 import concurrent.futures
 import traceback
-from memory_profiler import profile
+from ImageSettings import PolaroidType, ImageFactor
 import uuid
 import os
 
@@ -92,7 +92,7 @@ def get_factors(width:int, height:int, for_insta: bool) -> (float, float, float,
     top_factor = 0.02
 
     main_text_height_factor = 0.9
-    sub_text_height_factor = 0.94
+    sub_text_height_factor = 0.945
 
     if for_insta:
         side_factor = 0
@@ -100,14 +100,14 @@ def get_factors(width:int, height:int, for_insta: bool) -> (float, float, float,
         top_factor =  0.07
 
         main_text_height_factor = 0.93
-        sub_text_height_factor = 0.96
+        sub_text_height_factor = 0.965
 
     if height > width:
         print("Portrait image")
 
         bottom_factor = 0.13
         main_text_height_factor = 0.93
-        sub_text_height_factor = 0.955
+        sub_text_height_factor = 0.96
 
     return side_factor, top_factor, bottom_factor, main_text_height_factor, sub_text_height_factor
 
@@ -120,31 +120,32 @@ def blur_burst_center_image(im:Image.Image) -> Image.Image:
     return blurred_burst_cropped_image
 
 
-def generate_polaroid(image_URL:str, for_insta: bool) -> Image.Image:
+def generate_polaroid(image_URL:str, polaroid_type:PolaroidType) -> Image.Image:
     with Image.open(image_URL) as im:
 
         context_size = max(im.height, im.width)
         image = ImageOps.exif_transpose(im)
         print(image.size)
 
-        if for_insta and image.height > image.width:
+        if polaroid_type.value.requires_blur_for_portrait and image.height > image.width:
             print("Portrait Insta image")
             image = blur_burst_center_image(image)
 
-        side_factor, top_factor, bottom_factor, main_text_height_factor, sub_text_height_factor = get_factors(image.width, image.height, for_insta)
+        #side_factor, top_factor, bottom_factor, main_text_height_factor, sub_text_height_factor = get_factors(image.width, image.height, for_insta)
+        image_factor:ImageFactor = polaroid_type.value.landscape_factor if image.height <= image.width else polaroid_type.value.portrait_factor
 
 
-        polaroid_image = add_margin(image, int(context_size * top_factor), int(context_size * side_factor),
-                                    int(context_size * bottom_factor), int(context_size * side_factor), (255, 255, 255))
+        polaroid_image = add_margin(image, int(context_size * image_factor.top_factor), int(context_size * image_factor.left_factor),
+                                    int(context_size * image_factor.bottom_factor), int(context_size * image_factor.right_factor), (255, 255, 255))
 
         context_font_size = min(polaroid_image.height, polaroid_image.width)
 
         main_line, sub_line = get_meta_data(im)
 
-        polaroid_image = draw_text(polaroid_image, main_line.strip(), (0, 0, 0), 0.5, main_text_height_factor,
-                                   "./fonts/SamsungOne-700.ttf", int(context_font_size / 36.44))
+        polaroid_image = draw_text(polaroid_image, main_line.strip(), (0, 0, 0), image_factor.main_text_start_factor, image_factor.main_text_height_factor,
+                                   "./fonts/SamsungOne-700.ttf", int(context_font_size / 30.44))
 
-        polaroid_image = draw_text(polaroid_image, sub_line.strip(), (128, 128, 128), 0.5, sub_text_height_factor,
+        polaroid_image = draw_text(polaroid_image, sub_line.strip(), (128, 128, 128), image_factor.sub_text_start_factor, image_factor.sub_text_height_factor,
                                    "./fonts/SamsungOne-400.ttf", int(context_font_size / 50.14))
 
 
@@ -153,7 +154,7 @@ def generate_polaroid(image_URL:str, for_insta: bool) -> Image.Image:
 error_items = list()
 def main(value):
     try:
-        generate_polaroid(value, True).save("./output/" + str(uuid.uuid4()) + ".png", "PNG", compress_level=1)
+        generate_polaroid(value, PolaroidType.INSTA_SQUARED).save("./output/" + str(uuid.uuid4()) + ".png", "PNG", compress_level=1)
     except Exception as e:
         traceback.print_exc()
         print("Exception", str(e))
