@@ -82,35 +82,6 @@ def get_meta_data(im: Image) -> (str, str):
 
         return main_line, sub_line
 
-
-def get_factors(width:int, height:int, for_insta: bool) -> (float, float, float, float, float):
-
-    print("aspect ratio", (width / height).as_integer_ratio())
-
-    side_factor = 0.02
-    bottom_factor = 0.145
-    top_factor = 0.02
-
-    main_text_height_factor = 0.9
-    sub_text_height_factor = 0.945
-
-    if for_insta:
-        side_factor = 0
-        bottom_factor = 0.135
-        top_factor =  0.07
-
-        main_text_height_factor = 0.93
-        sub_text_height_factor = 0.965
-
-    if height > width:
-        print("Portrait image")
-
-        bottom_factor = 0.13
-        main_text_height_factor = 0.93
-        sub_text_height_factor = 0.96
-
-    return side_factor, top_factor, bottom_factor, main_text_height_factor, sub_text_height_factor
-
 def blur_burst_center_image(im:Image.Image) -> Image.Image:
     blurred_image = im.filter(ImageFilter.GaussianBlur(200))
     blurred_burst_image = blurred_image.resize((2*im.height, im.height))
@@ -126,13 +97,14 @@ def generate_polaroid(image_URL:str, polaroid_type:PolaroidType) -> Image.Image:
         context_size = max(im.height, im.width)
         image = ImageOps.exif_transpose(im)
         print(image.size)
+        is_portrait = image.height > image.width
 
-        if polaroid_type.value.requires_blur_for_portrait and image.height > image.width:
+        if polaroid_type.value.requires_blur_for_portrait and is_portrait:
             print("Portrait Insta image")
             image = blur_burst_center_image(image)
 
         #side_factor, top_factor, bottom_factor, main_text_height_factor, sub_text_height_factor = get_factors(image.width, image.height, for_insta)
-        image_factor:ImageFactor = polaroid_type.value.landscape_factor if image.height <= image.width else polaroid_type.value.portrait_factor
+        image_factor:ImageFactor = polaroid_type.value.landscape_factor if not is_portrait else polaroid_type.value.portrait_factor
 
 
         polaroid_image = add_margin(image, int(context_size * image_factor.top_factor), int(context_size * image_factor.left_factor),
@@ -143,10 +115,10 @@ def generate_polaroid(image_URL:str, polaroid_type:PolaroidType) -> Image.Image:
         main_line, sub_line = get_meta_data(im)
 
         polaroid_image = draw_text(polaroid_image, main_line.strip(), (0, 0, 0), image_factor.main_text_start_factor, image_factor.main_text_height_factor,
-                                   "./fonts/SamsungOne-700.ttf", int(context_font_size / 30.44))
+                                   "./fonts/SamsungOne-700.ttf", int(context_font_size / image_factor.main_text_font_factor))
 
         polaroid_image = draw_text(polaroid_image, sub_line.strip(), (128, 128, 128), image_factor.sub_text_start_factor, image_factor.sub_text_height_factor,
-                                   "./fonts/SamsungOne-400.ttf", int(context_font_size / 50.14))
+                                   "./fonts/SamsungOne-400.ttf", int(context_font_size / image_factor.sub_text_font_factor))
 
 
         return polaroid_image
@@ -154,7 +126,7 @@ def generate_polaroid(image_URL:str, polaroid_type:PolaroidType) -> Image.Image:
 error_items = list()
 def main(value):
     try:
-        generate_polaroid(value, PolaroidType.INSTA_SQUARED).save("./output/" + str(uuid.uuid4()) + ".png", "PNG", compress_level=1)
+        generate_polaroid(value, PolaroidType.QUARTER_POLAROID).save("./output/" + str(uuid.uuid4()) + ".png", "PNG", compress_level=1)
     except Exception as e:
         traceback.print_exc()
         print("Exception", str(e))
