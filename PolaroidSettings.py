@@ -28,7 +28,7 @@ class ImageSettings:
         self.requires_blur_for_portrait = portrait_blur
         self.is_compacted = is_compacted
 
-class PolaroidType(Enum):
+class PolaroidMode(Enum):
    FULL_POLAROID = ImageSettings(
        portrait_factor=ImageFactor(0.02,0.02,0.02,0.13,0.93, 0.5, 0.96,0.5, 0,30.44,46.14, "left", "left"),
        landscape_factor=ImageFactor(0.02,0.02,0.02,0.125,0.93, 0.5, 0.965,0.5, 0,29.44,44.14, "left", "left")

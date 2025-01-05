@@ -1,6 +1,6 @@
 import concurrent.futures
 import traceback
-from PolaroidSettings import PolaroidType, ImageFactor, ColorMode
+from PolaroidSettings import PolaroidMode, ImageFactor, ColorMode
 import uuid
 import os
 from datetime import datetime
@@ -126,7 +126,7 @@ def blur_burst_center_image(im:Image.Image) -> Image.Image:
     return blurred_burst_cropped_image
 
 
-def generate_polaroid(image_URL:str, polaroid_type:PolaroidType, color_mode:ColorMode) -> Image.Image:
+def generate_polaroid(image_URL:str, polaroid_type:PolaroidMode, color_mode:ColorMode) -> Image.Image:
     with Image.open(image_URL) as im:
 
         context_size = max(im.height, im.width)
@@ -160,7 +160,9 @@ def generate_polaroid(image_URL:str, polaroid_type:PolaroidType, color_mode:Colo
 error_items = list()
 def main(value):
     try:
-        generate_polaroid(value, PolaroidType.QUARTER_POLAROID_COMPACT, ColorMode.DARK).save("./output/" + str(uuid.uuid4()) + ".png", "PNG",
+        for color in list(ColorMode):
+            for mode in list(PolaroidMode):
+                generate_polaroid(value, mode, color).save("./output/" + str(uuid.uuid4()) + ".png", "PNG",
                                                             compress_level=1)
     except Exception as e:
         traceback.print_exc()
