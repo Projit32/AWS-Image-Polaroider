@@ -53,7 +53,7 @@ def generate_standard_text_lines(metadata_dict:dict, width:float, height:float):
 
     if metadata_dict.get("DateTime"):
         if main_line:
-            main_line += "   |   " + datetime.strptime(metadata_dict.get("DateTime"), "%Y:%m:%d %H:%M:%S").strftime("%c")
+            main_line += "    [ " + datetime.strptime(metadata_dict.get("DateTime"), "%Y:%m:%d %H:%M:%S").strftime("%a,  %d-%b-%Y  %H:%M:%S")+" ]"
         else:
             main_line = metadata_dict.get("DateTime")
 
@@ -61,9 +61,9 @@ def generate_standard_text_lines(metadata_dict:dict, width:float, height:float):
 
     sub_line = "{0:.1f}".format((height * width) / 1000000) + "MP"
     if metadata_dict.get("ImageWidth") and metadata_dict.get("ImageLength"):
-        sub_line += "    " + metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
+        sub_line += "   " + metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
     else:
-        sub_line += "    " + str(width) + "x" + str(height)
+        sub_line += "   " + str(width) + "x" + str(height)
 
     if metadata_dict.get("MaxApertureValue"):
         sub_line += "   f/" + metadata_dict.get("MaxApertureValue")
@@ -91,9 +91,9 @@ def generate_compacted_text_lines(metadata_dict:dict, width:float, height:float)
 
     sub_line = "{0:.1f}".format((height * width) / 1000000) + "MP"
     if metadata_dict.get("ImageWidth") and metadata_dict.get("ImageLength"):
-        sub_line += "    " + metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
+        sub_line += "   " + metadata_dict.get("ImageWidth") + "x" + metadata_dict.get("ImageLength")
     else:
-        sub_line += "    " + str(width) + "x" + str(height)
+        sub_line += "   " + str(width) + "x" + str(height)
 
     if metadata_dict.get("MaxApertureValue"):
         sub_line += "   f/" + metadata_dict.get("MaxApertureValue")
@@ -149,36 +149,40 @@ def generate_polaroid(image_URL:str, polaroid_type:PolaroidMode, color_mode:Colo
         main_line, sub_line = generate_compacted_text_lines(get_meta_data(im), im.width, im.height) if polaroid_type.value.is_compacted else generate_standard_text_lines(get_meta_data(im), im.width, im.height)
 
         polaroid_image = draw_text(polaroid_image, main_line.strip(), color_mode.value.main_color, image_factor.main_text_start_factor, image_factor.main_text_height_factor,
-                                   "./fonts/SamsungOne-700.ttf", int(context_font_size / image_factor.main_text_font_factor))
+                                   "./fonts/SamsungOne-700.ttf", int(context_font_size / image_factor.main_text_font_factor), image_factor.main_text_alignment)
 
         polaroid_image = draw_text(polaroid_image, sub_line.strip(), color_mode.value.sub_color, image_factor.sub_text_start_factor, image_factor.sub_text_height_factor,
-                                   "./fonts/SamsungOne-400.ttf", int(context_font_size / image_factor.sub_text_font_factor))
+                                   "./fonts/SamsungOne-400.ttf", int(context_font_size / image_factor.sub_text_font_factor), image_factor.sub_text_alignment)
 
 
         return polaroid_image
 
 error_items = list()
-def main(value):
+def main(data):
     try:
-        for color in list(ColorMode):
-            for mode in list(PolaroidMode):
-                generate_polaroid(value, mode, color).save("./output/" + str(uuid.uuid4()) + ".png", "PNG",
-                                                            compress_level=1)
+        generate_polaroid(data["image"], data["type"], data["color"]).save("./output/" + str(uuid.uuid4()) + ".png", "PNG",
+                                                   compress_level=1)
     except Exception as e:
         traceback.print_exc()
         print("Exception", str(e))
-        error_items.append(value)
+        error_items.append(data)
 
 if __name__ == "__main__":
 
     values = ["./input/"+item for item in os.listdir("./input")]
     print("Initial Input Size", len(values))
 
-    result = list()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as exe:
-        exe.map(main, values)
+    data = []
 
-    print("Final result size", len(list(result)))
+    print("Preparing data")
+    for ptype in list(PolaroidMode):
+        for color in list(ColorMode):
+            for image in values:
+                data.append({"image": image, "color": color, "type":ptype})
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as exe:
+        exe.map(main, data)
+
     print("final error Size", len(error_items), error_items)
 
 
