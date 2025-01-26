@@ -1,15 +1,14 @@
-import concurrent.futures
-import traceback
+from io import BytesIO
 from PolaroidSettings import PolaroidMode, ImageFactor, ColorMode
-import uuid
-import os
 from datetime import datetime
-from PIL import ImageOps, ImageDraw, ImageFont, ImageFilter, ImageFile
+from PIL import ImageOps, ImageDraw, ImageFont, ImageFilter
 from PIL import Image
 from PIL.ExifTags import TAGS
 import PIL
+from memory_profiler import profile
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
+@profile
 def add_margin(pil_img:Image.Image, top:int, right:int, bottom:int, left:int, color:tuple) -> Image.Image:
     width, height = pil_img.size
     new_width = width + right + left
@@ -18,6 +17,7 @@ def add_margin(pil_img:Image.Image, top:int, right:int, bottom:int, left:int, co
     result.paste(pil_img, (left, top))
     return result
 
+@profile
 def draw_text(pil_image: Image.Image, message: str, font_color: tuple, width_factor: float,height_factor: float, font: str, font_size: int, alignment:str = "left") -> Image.Image:
     W, H = pil_image.size
     draw = ImageDraw.Draw(pil_image)
@@ -26,6 +26,7 @@ def draw_text(pil_image: Image.Image, message: str, font_color: tuple, width_fac
     draw.text(((W-w)*width_factor, (H-h)*height_factor), message, font=font, fill=font_color, align=alignment)
     return pil_image
 
+@profile
 def get_meta_data(im: Image) -> dict:
     exif_data = im._getexif()
     metadata_keys = ["Make", "Model", "DateTime", "ImageWidth", "ImageLength", "FocalLength", "MaxApertureValue",
@@ -45,6 +46,7 @@ def get_meta_data(im: Image) -> dict:
 
     return metadata_dict
 
+@profile
 def generate_standard_text_lines(metadata_dict:dict, width:float, height:float):
     main_line = ""
 
@@ -81,6 +83,7 @@ def generate_standard_text_lines(metadata_dict:dict, width:float, height:float):
 
     return main_line, sub_line
 
+@profile
 def generate_compacted_text_lines(metadata_dict:dict, width:float, height:float):
     main_line = ""
 
@@ -117,6 +120,7 @@ def generate_compacted_text_lines(metadata_dict:dict, width:float, height:float)
 
     return main_line, sub_line
 
+@profile
 def blur_burst_center_image(im:Image.Image) -> Image.Image:
     blurred_image = im.filter(ImageFilter.GaussianBlur(200))
     blurred_burst_image = blurred_image.resize((2*im.height, im.height))
@@ -126,6 +130,7 @@ def blur_burst_center_image(im:Image.Image) -> Image.Image:
     return blurred_burst_cropped_image
 
 
+@profile
 def generate_polaroid(image_URL:str, polaroid_type:PolaroidMode, color_mode:ColorMode) -> Image.Image:
     with Image.open(image_URL) as im:
 
@@ -156,34 +161,6 @@ def generate_polaroid(image_URL:str, polaroid_type:PolaroidMode, color_mode:Colo
 
 
         return polaroid_image
-
-error_items = list()
-def main(data):
-    try:
-        generate_polaroid(data["image"], data["type"], data["color"]).save("./output/" + str(uuid.uuid4()) + ".png", "PNG",
-                                                   compress_level=1)
-    except Exception as e:
-        traceback.print_exc()
-        print("Exception", str(e))
-        error_items.append(data)
-
-if __name__ == "__main__":
-
-    values = ["./input/"+item for item in os.listdir("./input")]
-    print("Initial Input Size", len(values))
-
-    data = []
-
-    print("Preparing data")
-    for ptype in list(PolaroidMode):
-        for color in list(ColorMode):
-            for image in values:
-                data.append({"image": image, "color": color, "type":ptype})
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as exe:
-        exe.map(main, data)
-
-    print("final error Size", len(error_items), error_items)
 
 
 
