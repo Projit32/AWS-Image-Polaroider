@@ -14,7 +14,6 @@ error_items = list()
 
 def main(data):
     try:
-        print(data["image"].split("/")[-1].replace(".jpg", ""))
         output_file_name = data["image"].split("/")[-1].replace(".jpg", "") + "_" + str(data["type"]) + "_" + str(data["color"]) + ".png"
         output_image = generate_polaroid(data["image"], data["type"], data["color"])
         output_image.save("./output/" + output_file_name,"PNG",compress_level=1)
@@ -32,7 +31,6 @@ if __name__ == "__main__":
     print("Initial Input Size", len(values))
 
     data = []
-    values = [values[0]]
     print("Preparing data")
     for image in values:
         data.append({"image": image, "color": ColorMode.LIGHT, "type": PolaroidMode.INSTA_SQUARED_COMPACT})
