@@ -6,6 +6,7 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 import PIL
 from memory_profiler import profile
+from PIL.TiffImagePlugin import IFDRational
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
 @profile
@@ -38,7 +39,7 @@ def get_meta_data(im: Image) -> dict:
             # get the tag name, instead of human unreadable tag id
             tag = TAGS.get(tag_id, tag_id)
             data = exif_data.get(tag_id)
-            if tag in metadata_keys:
+            if tag in metadata_keys and str(data) != "nan":
                 # decode bytes
                 if isinstance(data, bytes):
                     data = data.decode()
