@@ -33,7 +33,8 @@ if __name__ == "__main__":
     data = []
     print("Preparing data")
     for image in values:
-        data.append({"image": image, "color": ColorMode.LIGHT, "type": PolaroidMode.INSTA_SQUARED_COMPACT})
+        for color in ColorMode:
+            data.append({"image": image, "color": color, "type": PolaroidMode.INSTA_SQUARED_COMPACT})
 
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as exe:

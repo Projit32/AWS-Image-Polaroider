@@ -102,7 +102,7 @@ def generate_compacted_text_lines(metadata_dict:dict, width:float, height:float)
     if metadata_dict.get("MaxApertureValue"):
         sub_line += "   f/" + metadata_dict.get("MaxApertureValue")
 
-    if metadata_dict.get("ExposureTime"):
+    if metadata_dict.get("ExposureTime") and float(metadata_dict.get("ExposureTime")) > 0.0:
         sub_line += "   1/" + str(int(1 / float(metadata_dict.get("ExposureTime")))) + "s"
 
     if metadata_dict.get("FocalLength"):
