@@ -3,7 +3,7 @@ import os
 import traceback
 import uuid
 
-from PolaroidBuilder import generate_polaroid
+from PolaroidBuilder import generate_polaroid_from_url
 from PolaroidSettings import ColorMode, PolaroidMode
 
 # import resource
@@ -15,7 +15,7 @@ error_items = list()
 def main(data):
     try:
         output_file_name = data["image"].split("/")[-1].replace(".jpg", "") + "_" + str(data["type"]).split(".")[-1] + "_" + str(data["color"]).split(".")[-1] + ".png"
-        output_image = generate_polaroid(data["image"], data["type"], data["color"])
+        output_image = generate_polaroid_from_url(data["image"], data["type"], data["color"])
         output_image.save("./output/" + output_file_name,"PNG",compress_level=1)
     except Exception as e:
         traceback.print_exc()

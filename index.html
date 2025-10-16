@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processor</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .upload-section {
+            background: #f8f9ff;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-label:hover {
+            transform: scale(1.05);
+        }
+
+        .preview-container {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: none;
+            overflow-x: auto;
+            white-space: nowrap;
+            max-height: 400px;
+        }
+
+        .preview-container::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .preview-container::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .preview-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .preview-image {
+            display: inline-block;
+            margin-right: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .preview-image:hover {
+            transform: scale(1.05);
+        }
+
+        .controls {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .dropdown-group {
+            margin-bottom: 20px;
+        }
+
+        .dropdown-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .dropdown-group select {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-group select:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .results-container {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .results-title {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minminmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 15px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .result-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-item img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .result-item img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .result-item img:active {
+            transform: scale(0.98);
+        }
+
+        .result-item p {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Image Processor</h1>
+
+        <div class="upload-section">
+            <input type="file" id="imageInput" accept="image/*" multiple>
+            <label for="imageInput" class="upload-label">
+                📁 Choose Images
+            </label>
+            <p style="margin-top: 15px; color: #666;">Select multiple images to process</p>
+        </div>
+
+        <div id="previewContainer" class="preview-container"></div>
+
+        <div id="controls" class="controls">
+            <div class="dropdown-group">
+                <label for="polaroidType">Polaroid Type</label>
+                <select id="polaroidType">
+                    <option value="F">Full</option>
+                    <option value="H">Half</option>
+                    <option value="Q">Quarter</option>
+                    <option value="IS">Insta Square</option>
+                    <option value="FC">Full (Compact)</option>
+                    <option value="HC">Half (Compact)</option>
+                    <option value="QC">Quarter (Compact)</option>
+                    <option value="ISC">Insta Square (Compact)</option>
+                </select>
+            </div>
+
+            <div class="dropdown-group">
+                <label for="color">Color Mode</label>
+                <select id="color">
+                    <option value="D">Dark</option>
+                    <option value="L">Light</option>
+                </select>
+            </div>
+
+            <button id="submitBtn" class="submit-btn">
+                ✨ Process Images
+            </button>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Processing images...</p>
+        </div>
+
+        <div id="resultsContainer" class="results-container">
+            <h2 class="results-title">Processed Images</h2>
+            <div id="resultsGrid" class="results-grid"></div>
+        </div>
+    </div>
+
+    <script type="py" src="./WebRunner.py" config="./pyscript.json"></script>
+</body>

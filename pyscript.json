@@ -1,0 +1,10 @@
+{
+  "packages": ["Pillow"],
+  "plugins": [],
+  "files": {
+    "./PolaroidBuilder.py": "./PolaroidBuilder.py",
+    "./PolaroidSettings.py": "./PolaroidSettings.py",
+    "./fonts/SamsungOne-700.ttf": "./fonts/SamsungOne-700.ttf",
+    "./fonts/SamsungOne-400.ttf": "./fonts/SamsungOne-400.ttf"
+  }
+}

@@ -1,15 +1,16 @@
-from io import BytesIO
+import os
+import traceback
+
 from PolaroidSettings import PolaroidMode, ImageFactor, ColorMode
 from datetime import datetime
 from PIL import ImageOps, ImageDraw, ImageFont, ImageFilter
 from PIL import Image
 from PIL.ExifTags import TAGS
 import PIL
-from memory_profiler import profile
-from PIL.TiffImagePlugin import IFDRational
+# from memory_profiler import profile
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
-@profile
+#@profile
 def add_margin(pil_img:Image.Image, top:int, right:int, bottom:int, left:int, color:tuple) -> Image.Image:
     width, height = pil_img.size
     new_width = width + right + left
@@ -18,7 +19,7 @@ def add_margin(pil_img:Image.Image, top:int, right:int, bottom:int, left:int, co
     result.paste(pil_img, (left, top))
     return result
 
-@profile
+#@profile
 def draw_text(pil_image: Image.Image, message: str, font_color: tuple, width_factor: float,height_factor: float, font: str, font_size: int, alignment:str = "left") -> Image.Image:
     W, H = pil_image.size
     draw = ImageDraw.Draw(pil_image)
@@ -27,7 +28,7 @@ def draw_text(pil_image: Image.Image, message: str, font_color: tuple, width_fac
     draw.text(((W-w)*width_factor, (H-h)*height_factor), message, font=font, fill=font_color, align=alignment)
     return pil_image
 
-@profile
+#@profile
 def get_meta_data(im: Image) -> dict:
     exif_data = im._getexif()
     metadata_keys = ["Make", "Model", "DateTime", "ImageWidth", "ImageLength", "FocalLength", "MaxApertureValue",
@@ -47,7 +48,7 @@ def get_meta_data(im: Image) -> dict:
 
     return metadata_dict
 
-@profile
+#@profile
 def generate_standard_text_lines(metadata_dict:dict, width:float, height:float):
     main_line = ""
 
@@ -84,7 +85,7 @@ def generate_standard_text_lines(metadata_dict:dict, width:float, height:float):
 
     return main_line, sub_line
 
-@profile
+#@profile
 def generate_compacted_text_lines(metadata_dict:dict, width:float, height:float):
     main_line = ""
 
@@ -121,7 +122,7 @@ def generate_compacted_text_lines(metadata_dict:dict, width:float, height:float)
 
     return main_line, sub_line
 
-@profile
+#@profile
 def blur_burst_center_image(im:Image.Image) -> Image.Image:
     blurred_image = im.filter(ImageFilter.GaussianBlur(200))
     blurred_burst_image = blurred_image.resize((2*im.height, im.height))
@@ -131,9 +132,8 @@ def blur_burst_center_image(im:Image.Image) -> Image.Image:
     return blurred_burst_cropped_image
 
 
-@profile
-def generate_polaroid(image_URL:str, polaroid_type:PolaroidMode, color_mode:ColorMode) -> Image.Image:
-    with Image.open(image_URL) as im:
+#@profile
+def generate_polaroid(im:Image.Image, polaroid_type:PolaroidMode, color_mode:ColorMode) -> Image.Image:
 
         context_size = max(im.height, im.width)
         image = ImageOps.exif_transpose(im)
@@ -164,12 +164,6 @@ def generate_polaroid(image_URL:str, polaroid_type:PolaroidMode, color_mode:Colo
         return polaroid_image
 
 
-
-
-
-
-
-
-
-
-
+def generate_polaroid_from_url(image_url:str, polaroid_type:PolaroidMode, color_mode:ColorMode) -> Image.Image:
+    with Image.open(image_url) as im:
+        return generate_polaroid(im, polaroid_type, color_mode)
