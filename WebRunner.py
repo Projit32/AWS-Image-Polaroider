@@ -1,3 +1,5 @@
+import traceback
+
 from pyscript import document, window
 from pyodide.ffi import create_proxy
 from PIL import Image
@@ -21,10 +23,12 @@ polaroid_mode_codes = {
 }
 
 color_mode_code ={
-    "D": ColorMode.DARK,
-    "L": ColorMode.LIGHT
+    "Dark": ColorMode.DARK,
+    "Light": ColorMode.LIGHT
 }
 
+submit_btn = document.getElementById("submitBtn")
+results_section = document.getElementById('resultsSection')
 
 class ImageProcessor:
     def __init__(self):
@@ -34,8 +38,8 @@ class ImageProcessor:
 
     def setup_event_listeners(self):
         """Setup all event listeners"""
-        image_input = document.getElementById("imageInput")
-        submit_btn = document.getElementById("submitBtn")
+        image_input = document.getElementById("imageUpload")
+
 
         # Create proxies for event handlers
         upload_proxy = create_proxy(self.handle_image_upload)
@@ -47,24 +51,15 @@ class ImageProcessor:
         image_input.addEventListener("change", upload_proxy)
         submit_btn.addEventListener("click", submit_proxy)
 
+        document.getElementById("loadingScreen").classList.add('d-none')
+        document.getElementById("polaroidAccordion").classList.remove('d-none')
+
     async def handle_image_upload(self, event):
         """Handle image upload and display preview"""
         files = event.target.files
-        preview_container = document.getElementById("previewContainer")
-        controls = document.getElementById("controls")
 
         # Clear previous previews and images
-        preview_container.innerHTML = ""
         self.images = []
-
-        if files.length == 0:
-            preview_container.style.display = "none"
-            controls.style.display = "none"
-            return
-
-        # Show containers
-        preview_container.style.display = "block"
-        controls.style.display = "block"
 
         # Process each file
         for i in range(files.length):
@@ -83,15 +78,6 @@ class ImageProcessor:
                 'name': file.name
             })
 
-            # Create and scale preview image
-            img = document.createElement("img")
-            img.src = data_url
-            img.className = "preview-image"
-            img.style.height = "270px"  # 480p height scaled down for preview
-            img.style.width = "auto"
-
-            preview_container.appendChild(img)
-
     async def read_file_as_data_url(self, reader, file):
         """Read file as data URL using promise"""
         future = asyncio.Future()
@@ -109,29 +95,27 @@ class ImageProcessor:
         return result
 
     async def process_images(self, event):
+        # Add Loading animation
+        submit_btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...'
+        submit_btn.disabled = True
+
         """Process all uploaded images"""
         if len(self.images) == 0:
             window.alert("Please upload images first!")
             return
 
-        # Show loading
-        loading = document.getElementById("loading")
-        loading.style.display = "block"
-
         # Get selected options
-        polaroid_type = document.getElementById("polaroidType").value
-        color_type = document.getElementById("color").value
+        polaroid_type = document.querySelector('input[name="polaroidType"]:checked').value
+        color_type = document.getElementById("selectedColor").textContent
 
-        # Hide controls
-        controls = document.getElementById("controls")
-        controls.style.display = "none"
 
         # Process images
-        results_grid = document.getElementById("resultsGrid")
         results_container = document.getElementById("resultsContainer")
-        results_grid.innerHTML = ""
 
         await asyncio.sleep(0.1)  # Allow UI to update
+        
+        # Generate Result Table
+        results_container.innerHTML = ''
 
         for idx, img_data in enumerate(self.images):
             try:
@@ -142,39 +126,133 @@ class ImageProcessor:
                 polaroid_mode = polaroid_mode_codes.get(polaroid_type)
 
                 processed_image = generate_polaroid(pil_image, polaroid_mode, color_mode)
-                print("Polaroiding complete")
-
                 # Convert back to data URL
                 processed_data_url = self.pil_to_data_url(processed_image)
 
-                # Create result item
-                result_item = document.createElement("div")
-                result_item.className = "result-item"
+                # Generate Card
+                resultCard = document.createElement('div')
+                resultCard.className = 'result-card'
+                resultCard.style.animationDelay = f"{idx * 0.1}s"
 
-                result_img = document.createElement("img")
-                result_img.src = processed_data_url
-                result_img.style.cursor = "pointer"
-                result_img.title = "Click to download"
-
-                # Add click handler for download
                 download_proxy = create_proxy(
-                    lambda e, url=processed_data_url, name=img_data['name']: self.download_image(url, name, polaroid_mode,
+                    lambda e, url=processed_data_url, name=img_data['name']: self.download_image(url, name,
+                                                                                                 polaroid_mode,
                                                                                                  color_mode))
-                result_img.addEventListener("click", download_proxy)
 
-                result_text = document.createElement("p")
-                result_text.textContent = f"Image {idx + 1}: {img_data['name']}"
+                # Create main image element
+                img = document.createElement("img")
+                img.src = processed_data_url
+                img.alt = f"Polaroid {idx + 1}"
+                img.className = "result-card-image"
 
-                result_item.appendChild(result_img)
-                result_item.appendChild(result_text)
-                results_grid.appendChild(result_item)
+                # Create result-card-info container
+                result_card_info = document.createElement("div")
+                result_card_info.className = "result-card-info"
+
+                # Create result-details container
+                result_details = document.createElement("div")
+                result_details.className = "result-details"
+
+                # Create Name detail item
+                name_item = document.createElement("div")
+                name_item.className = "result-detail-item"
+                name_label = document.createElement("span")
+                name_label.className = "result-detail-label"
+                name_label.textContent = "Name"
+                name_value = document.createElement("span")
+                name_value.className = "result-detail-value"
+                name_value.textContent = img_data['name']
+                name_item.appendChild(name_label)
+                name_item.appendChild(name_value)
+
+                # Create Style detail item
+                style_item = document.createElement("div")
+                style_item.className = "result-detail-item"
+                style_label = document.createElement("span")
+                style_label.className = "result-detail-label"
+                style_label.textContent = "Style"
+                style_value = document.createElement("span")
+                style_value.className = "result-detail-value"
+                style_value.textContent = polaroid_type
+                style_item.appendChild(style_label)
+                style_item.appendChild(style_value)
+
+                # Create Theme detail item
+                theme_item = document.createElement("div")
+                theme_item.className = "result-detail-item"
+                theme_label = document.createElement("span")
+                theme_label.className = "result-detail-label"
+                theme_label.textContent = "Theme"
+                theme_value = document.createElement("span")
+                theme_value.className = "result-detail-value"
+                theme_value.textContent = color_type
+                theme_item.appendChild(theme_label)
+                theme_item.appendChild(theme_value)
+
+                # Append detail items to result-details
+                result_details.appendChild(name_item)
+                result_details.appendChild(style_item)
+                result_details.appendChild(theme_item)
+
+                # Create result-actions container
+                result_actions = document.createElement("div")
+                result_actions.className = "result-actions"
+
+                # Create download button
+                download_btn = document.createElement("button")
+                download_btn.className = "btn btn-outline-primary"
+                download_btn.title = "Download"
+                download_btn.addEventListener("click", download_proxy)
+
+                # Create SVG for download icon
+                svg_ns = "http://www.w3.org/2000/svg"
+                svg = document.createElementNS(svg_ns, "svg")
+                svg.setAttribute("xmlns", svg_ns)
+                svg.setAttribute("width", "16")
+                svg.setAttribute("height", "16")
+                svg.setAttribute("fill", "currentColor")
+                svg.setAttribute("class", "bi bi-download")
+                svg.setAttribute("viewBox", "0 0 16 16")
+
+                # Create SVG paths
+                path1 = document.createElementNS(svg_ns, "path")
+                path1.setAttribute("d",
+                                   "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z")
+
+                path2 = document.createElementNS(svg_ns, "path")
+                path2.setAttribute("d",
+                                   "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z")
+
+                svg.appendChild(path1)
+                svg.appendChild(path2)
+                download_btn.appendChild(svg)
+                result_actions.appendChild(download_btn)
+
+                # Assemble everything
+                result_card_info.appendChild(result_details)
+                result_card_info.appendChild(result_actions)
+
+                # Finally, add to parent
+                resultCard.appendChild(img)
+                resultCard.appendChild(result_card_info)
+                results_container.appendChild(resultCard)
 
             except Exception as e:
                 console.error(f"Error processing image {idx + 1}: {str(e)}")
+                traceback.print_exc()
 
-        # Hide loading and show results
-        loading.style.display = "none"
-        results_container.style.display = "block"
+        # Show results section
+        results_section.classList.remove('d-none')
+        results_section.scrollIntoView({ "behavior": 'smooth', "block": 'start' })
+
+        # Reset button
+        submit_btn.innerHTML = 'Create Polaroids'
+        submit_btn.disabled = False
+        results_section.style.animation = 'none'
+        def set_transition():
+            results_section.style.animation = 'fadeInUp 0.6s ease-out'
+        window.setTimeout(set_transition, 10)
+
 
     def data_url_to_pil(self, data_url):
         """Convert data URL to PIL Image"""
