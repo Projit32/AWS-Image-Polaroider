@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: Cloudfront hosted S3 Bucket for static content
+Description: Cloudfront hosted S3 Bucket for static content with custom domain and TLS
 
 Parameters:
   BucketName:
@@ -10,6 +10,16 @@ Parameters:
   DeploymentName:
     Type: String
     Description: Name of the Cloudfront Deployment Target Origin
+
+  DomainName:
+    Type: String
+    Description: The custom domain name (e.g., something.domain.com)
+    AllowedPattern: ^[a-z0-9.-]+$
+    ConstraintDescription: Must be a valid domain name
+
+  HostedZoneId:
+    Type: String
+    Description: Route53 Hosted Zone ID for the domain
 
 Resources:
   S3Bucket:
@@ -28,6 +38,21 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
+  # ACM Certificate in us-east-1 (required for CloudFront)
+  ACMCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      CertificateTransparencyLoggingPreference: ENABLED
+      KeyAlgorithm: RSA_2048
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+      Tags:
+        - Key: Name
+          Value: !Sub ${DeploymentName}-certificate
+
   CloudFrontOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -42,8 +67,15 @@ Resources:
     Type: AWS::CloudFront::Distribution
     DependsOn:
       - S3Bucket
+      - ACMCertificate
     Properties:
       DistributionConfig:
+        Aliases:
+          - !Ref DomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref ACMCertificate
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
         Origins:
           - DomainName: !GetAtt S3Bucket.DomainName
             Id: !Ref DeploymentName
@@ -98,6 +130,17 @@ Resources:
               StringEquals:
                 AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution.Id}"
 
+  Route53RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: !Ref HostedZoneId
+        EvaluateTargetHealth: false
+
 Outputs:
   S3BucketName:
     Description: Name of the s3 bucket
@@ -106,3 +149,15 @@ Outputs:
   CloudfrontArn:
     Description: Arn of cloudfront
     Value: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution.Id}"
+
+  CloudfrontDomainName:
+    Description: CloudFront distribution domain name
+    Value: !GetAtt CloudFrontDistribution.DomainName
+
+  WebsiteURL:
+    Description: Custom domain URL for the website
+    Value: !Sub "https://${DomainName}"
+
+  CertificateArn:
+    Description: ARN of the ACM certificate
+    Value: !Ref ACMCertificate

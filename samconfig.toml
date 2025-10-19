@@ -6,5 +6,5 @@ s3_prefix = "polaroid-cloudfront"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
-parameter_overrides = "BucketName=\"polaroid.proapplication.net\" DeploymentName=\"polaroid-hosting-bucket\""
+parameter_overrides = "BucketName=\"polaroid-bucket\" DeploymentName=\"polaroid-hosting-bucket\" DomainName=\"polaroids.proapplication.net\" HostedZoneId=\"Z0716017FNQSL38BA6TG\""
 
