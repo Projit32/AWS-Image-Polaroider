@@ -29,6 +29,7 @@ color_mode_code ={
 
 submit_btn = document.getElementById("submitBtn")
 results_section = document.getElementById('resultsSection')
+download_all_btn = document.getElementById("downloadAll")
 
 class ImageProcessor:
     def __init__(self):
@@ -42,15 +43,18 @@ class ImageProcessor:
         image_input = document.getElementById("imageUpload")
 
 
+
         # Create proxies for event handlers
         upload_proxy = create_proxy(self.handle_image_upload)
         submit_proxy = create_proxy(self.process_images)
+        download_all_proxy = create_proxy(self.download_all)
 
         # Store proxies to prevent garbage collection
-        self.proxies.extend([upload_proxy, submit_proxy])
+        self.proxies.extend([upload_proxy, submit_proxy, download_all_proxy])
 
         image_input.addEventListener("change", upload_proxy)
         submit_btn.addEventListener("click", submit_proxy)
+        download_all_btn.addEventListener("click", download_all_proxy)
 
         document.getElementById("loadingScreen").classList.add('d-none')
         document.getElementById("polaroidAccordion").classList.remove('d-none')
@@ -297,9 +301,10 @@ class ImageProcessor:
         # Trigger download
         a.click()
 
+    async def download_all(self, event):
+        for item in self.list_of_downloads:
+            item.click()
+
 
 # Initialize the processor
 processor = ImageProcessor()
-
-def download_all():
-    window.alert("downloading all images")
