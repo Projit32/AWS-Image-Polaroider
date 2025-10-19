@@ -11,8 +11,8 @@
 <body>
     <div class="container-fluid main-container">
         <header class="text-center py-5">
-            <h1 class="display-4 fw-light text-gradient">Polaroid Creator</h1>
-            <p class="lead text-muted">Transform your memories into timeless polaroids</p>
+            <img src="./static/logo.svg" class="logo" alt="logo">
+            <p class="lead fw-light text-gradient">Transform your memories into timeless polaroids</p>
         </header>
 
         <div class="container">
@@ -76,56 +76,56 @@
                     <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#polaroidAccordion">
                         <div class="accordion-body">
                             <div class="row g-3">
-                                <div class="col-6 col-md-3" data-type="Full">
+                                <div class="col-6 col-md-6" data-type="Full">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type1" value="F">
                                     <label class="polaroid-option" for="type1">
                                         <img src="./static/IMG_2163_FULL_POLAROID_DARK.png" alt="Full">
                                         <span id="F">Full Polaroid</span>
                                     </label>
                                 </div>
-                                <div class="col-6 col-md-3" data-type="Half">
+                                <div class="col-6 col-md-6" data-type="Half">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type2" value="H">
                                     <label class="polaroid-option" for="type2">
                                         <img src="./static/IMG_2163_HALF_POLAROID_DARK.png" alt="Half">
                                         <span id="H">Half Polaroid</span>
                                     </label>
                                 </div>
-                                <div class="col-6 col-md-3" data-type="Quarter">
+                                <div class="col-6 col-md-6" data-type="Quarter">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type3" value="Q">
                                     <label class="polaroid-option" for="type3">
                                         <img src="./static/IMG_2163_QUARTER_POLAROID_DARK.png" alt="Quarter">
                                         <span id="Q">Quarter Polaroid</span>
                                     </label>
                                 </div>
-                                <div class="col-6 col-md-3" data-type="Insta Square">
+                                <div class="col-6 col-md-6" data-type="Insta Square">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type4" value="IS">
                                     <label class="polaroid-option" for="type4">
                                         <img src="./static/IMG_2163_INSTA_SQUARED_DARK.png" alt="Insta Square">
                                         <span id="IS">Instagram Squared</span>
                                     </label>
                                 </div>
-                                <div class="col-6 col-md-3" data-type="Full Compact">
+                                <div class="col-6 col-md-6" data-type="Full Compact">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type5" value="FC">
                                     <label class="polaroid-option" for="type5">
                                         <img src="./static/IMG_2163_FULL_POLAROID_COMPACT_DARK.png" alt="Full Compact">
                                         <span id="FC">Full Compact Polaroid</span>
                                     </label>
                                 </div>
-                                <div class="col-6 col-md-3" data-type="Half Compact">
+                                <div class="col-6 col-md-6" data-type="Half Compact">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type6" value="HC">
                                     <label class="polaroid-option" for="type6">
                                         <img src="./static/IMG_2163_HALF_POLAROID_COMPACT_DARK.png" alt="Half Compact">
                                         <span id="HC">Half Compact Polaroid</span>
                                     </label>
                                 </div>
-                                <div class="col-6 col-md-3" data-type="Quarter Compact">
+                                <div class="col-6 col-md-6" data-type="Quarter Compact">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type7" value="QC">
                                     <label class="polaroid-option" for="type7">
                                         <img src="./static/IMG_2163_QUARTER_POLAROID_COMPACT_DARK.png"  alt="Quarter Compact">
                                         <span id="QC">Quarter Compact Polaroid</span>
                                     </label>
                                 </div>
-                                <div class="col-6 col-md-3" data-type="Insta Squared Compact">
+                                <div class="col-6 col-md-6" data-type="Insta Squared Compact">
                                     <input type="radio" class="btn-check" name="polaroidType" id="type8" value="ISC">
                                     <label class="polaroid-option" for="type8">
                                         <img src="./static/IMG_2163_INSTA_SQUARED_COMPACT_DARK.png"  alt="Insta Squared Compact">
@@ -208,6 +208,15 @@
                 <h3 class="text-center mb-4">Your Polaroid Gallery</h3>
                 <div class="results-container" id="resultsContainer">
                     <!-- Result images will be dynamically inserted here -->
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg download-all-btn" py-onclick="download_all()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-download me-2" viewBox="0 0 16 16">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                        </svg>
+                        Download All Polaroids
+                    </button>
                 </div>
             </div>
         </div>

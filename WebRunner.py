@@ -35,6 +35,7 @@ class ImageProcessor:
         self.images = []
         self.proxies = []  # Store proxies to prevent garbage collection
         self.setup_event_listeners()
+        self.list_of_downloads = []
 
     def setup_event_listeners(self):
         """Setup all event listeners"""
@@ -203,6 +204,7 @@ class ImageProcessor:
                 download_btn.className = "btn btn-outline-primary"
                 download_btn.title = "Download"
                 download_btn.addEventListener("click", download_proxy)
+                self.list_of_downloads.append(download_btn)
 
                 # Create SVG for download icon
                 svg_ns = "http://www.w3.org/2000/svg"
@@ -298,3 +300,6 @@ class ImageProcessor:
 
 # Initialize the processor
 processor = ImageProcessor()
+
+def download_all():
+    window.alert("downloading all images")
