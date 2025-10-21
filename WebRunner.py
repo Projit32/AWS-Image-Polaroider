@@ -65,23 +65,27 @@ class ImageProcessor:
 
         # Clear previous previews and images
         self.images = []
-
+        crt = 0
         # Process each file
         for i in range(files.length):
-            file = files.item(i)
+            if i < 10:
+                file = files.item(i)
 
-            # Read file as data URL
-            reader = FileReader.new()
+                # Read file as data URL
+                reader = FileReader.new()
 
-            # Create a promise to wait for file reading
-            promise = self.read_file_as_data_url(reader, file)
-            data_url = await promise
+                # Create a promise to wait for file reading
+                promise = self.read_file_as_data_url(reader, file)
+                data_url = await promise
 
-            # Store original image data
-            self.images.append({
-                'data_url': data_url,
-                'name': file.name
-            })
+                # Store original image data
+                self.images.append({
+                    'data_url': data_url,
+                    'name': file.name
+                })
+            crt+=1
+        if crt > 10:
+            window.alert("More than 10 images are selected. Only first 10 will be processed!")
 
     async def read_file_as_data_url(self, reader, file):
         """Read file as data URL using promise"""
@@ -124,6 +128,8 @@ class ImageProcessor:
 
         for idx, img_data in enumerate(self.images):
             try:
+                submit_btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...'+(str(idx+1))+"/"+(str(len(self.images)))
+                await asyncio.sleep(0.1)
                 # Convert data URL to PIL Image
                 pil_image = self.data_url_to_pil(img_data['data_url'])
 

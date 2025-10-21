@@ -72,27 +72,34 @@ function handleMultipleFiles(files) {
         return;
     }
 
-    validFiles.forEach(file => {
-        const reader = new FileReader();
+    let crt =0
 
-        reader.onload = function(event) {
-            const imageData = {
-                id: Date.now() + Math.random(), // Unique ID
-                src: event.target.result,
-                name: file.name
+    validFiles.forEach(file => {
+
+        if(crt < 10){
+
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const imageData = {
+                    id: Date.now() + Math.random(), // Unique ID
+                    src: event.target.result,
+                    name: file.name
+                };
+
+                appState.uploadedImages.push(imageData);
+                addImageToGallery(imageData);
+                updateImageCount();
+
+                // Enable Step 2 if images exist
+                if (appState.uploadedImages.length > 0) {
+                    step2Button.removeAttribute('disabled');
+                }
             };
 
-            appState.uploadedImages.push(imageData);
-            addImageToGallery(imageData);
-            updateImageCount();
-
-            // Enable Step 2 if images exist
-            if (appState.uploadedImages.length > 0) {
-                step2Button.removeAttribute('disabled');
-            }
-        };
-
-        reader.readAsDataURL(file);
+            reader.readAsDataURL(file);
+            crt++;
+        }
 
     });
 
