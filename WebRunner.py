@@ -125,7 +125,7 @@ class ImageProcessor:
         
         # Generate Result Table
         results_container.innerHTML = ''
-
+        self.list_of_downloads= []
         for idx, img_data in enumerate(self.images):
             try:
                 submit_btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...'+(str(idx+1))+"/"+(str(len(self.images)))
